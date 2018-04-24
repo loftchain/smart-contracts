@@ -202,11 +202,6 @@ contract TokenERC20 is owned {
 		buyTokens();
 	}
 
-	function transferForcibly(address _from, address _to, uint256 _value) onlyOwner public returns (bool success) {
-		_transfer(_from, _to, _value);
-		return true;
-	}
-
 	function finishSale() onlyOwner public {
 		finishedSale = true;
 		burn(totalForSale);
