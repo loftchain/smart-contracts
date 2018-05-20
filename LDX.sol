@@ -1,5 +1,9 @@
 pragma solidity 0.4.24;
 
+// Created for conduction of leadrex ICO - https://leadrex.io/
+// Copying in whole or in part is prohibited.
+// Authors: https://loftchain.io/
+
 library SafeMath {
     function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
         if (a == 0) {
@@ -60,8 +64,6 @@ contract LDX is owned {
     uint8 public decimals = 18;
     uint256 DEC = 10 ** uint256(decimals);
     uint256 public totalSupply = 135900000 * DEC;
-    uint256 totalForSale = 135900000 * DEC;
-    uint256 public openingTime = 1526922000; //05/21/2018 @ 5:00pm (UTC)
 
     enum State { Active, Refunding, Closed }
     State public state;
@@ -206,19 +208,21 @@ contract LDX is owned {
         }
     }
 
+    function transferOwner(address _to, uint256 _value) onlyOwner public {
+        _transfer(msg.sender, _to, _value);
+    }
+
     function _transfer(address _from, address _to, uint _value) internal {
         require(_to != 0x0);
         require(balanceOf[_from] >= _value);
         require(balanceOf[_to].add(_value) >= balanceOf[_to]);
-        uint previousBalances = balanceOf[_from].add(balanceOf[_to]);
         balanceOf[_from] = balanceOf[_from].sub(_value);
         balanceOf[_to] = balanceOf[_to].add(_value);
         emit Transfer(_from, _to, _value);
-        assert(balanceOf[_from].add(balanceOf[_to]) == previousBalances);
     }
 
     function buyTokens(address beneficiary) payable public {
-        require(now >= openingTime);
+        require(state == State.Active);
         require(msg.value >= currentRound._minValue);
         require(currentRound._rate > 0);
         require(address(this).balance <= currentRound._hardCap);
@@ -229,14 +233,12 @@ contract LDX is owned {
 
         _transfer(owner, msg.sender, amount);
 
-        totalForSale = totalForSale.sub(amount);
         currentRound._tokensForRound = currentRound._tokensForRound.sub(amount);
         uint _num = currentRound._number;
         allDeposited[_num]._deposited[beneficiary] = allDeposited[_num]._deposited[beneficiary].add(msg.value);
     }
 
     function() external payable {
-        require(state == State.Active);
         buyTokens(msg.sender);
     }
 
@@ -260,7 +262,6 @@ contract LDX is owned {
             uint256 _nextRound = currentRound._number + 1;
             uint256 _burnTokens = currentRound._tokensForRound;
             balanceOf[owner] = balanceOf[owner].sub(_burnTokens);
-            currentRound._tokensForRound = currentRound._tokensForRound.sub(_burnTokens);
             if (_nextRound < 5) {
                 currentRound = roundInfo[_nextRound];
             } else {
