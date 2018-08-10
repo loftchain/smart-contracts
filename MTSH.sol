@@ -77,15 +77,15 @@ contract MTSH is owned {
 
     constructor() public {
         roundInfo[0] = Round(
-            48720 * 1 ether, //~20kk USD
+            50000 * 1 ether,
             20
         );
         roundInfo[1] = Round(
-            48720 * 1 ether, //~20kk USD
+            50000 * 1 ether,
             10
         );
         roundInfo[2] = Round(
-            146160 * 1 ether, //~60kk USD
+            150000 * 1 ether,
             0
         );
 
