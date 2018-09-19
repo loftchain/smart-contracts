@@ -1,4 +1,4 @@
-pragma solidity 0.4.24;
+pragma solidity 0.4.25;
 import "github.com/oraclize/ethereum-api/oraclizeAPI.sol";
 
 library SafeMath {
@@ -74,7 +74,8 @@ contract MTSH is owned, usingOraclize {
 
     function __callback(bytes32 myid, string result) {
         if (msg.sender != oraclize_cbAddress()) revert();
-        curs = stringToUint(result);
+        curs = parseInt(result);
+        rate =  1 ether * curs /cost;
         LogPriceUpdated(result);
         updatePrice();
     }
@@ -195,6 +196,7 @@ contract MTSH is owned, usingOraclize {
 
     function updateCurs(uint256 _value) onlyOwner public {
         curs = _value;
+        rate =  1 ether * curs /cost;
     }
 
     //1 Sept 1200 UTC to 24 Sept 2018 1200 UTC– Launch of Website / QA / Private Sale 0.1$
@@ -217,18 +219,6 @@ contract MTSH is owned, usingOraclize {
         } else if (block.timestamp >= 1543233600 && block.timestamp < 1546257600) {
             return 10;
         } else return 0;
-    }
-
-    function stringToUint(string s) constant returns (uint result) {
-        bytes memory b = bytes(s);
-        uint i;
-        result = 0;
-        for (i = 0; i < b.length; i++) {
-            uint c = uint(b[i]);
-            if (c >= 48 && c <= 57) {
-                result = result * 10 + (c - 48);
-            }
-        }
     }
 
     function updatePrice() payable {
