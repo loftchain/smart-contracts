@@ -199,25 +199,27 @@ contract MTSH is owned, usingOraclize {
         rate =  1 ether * curs /cost;
     }
 
-    //1 Sept 1200 UTC to 24 Sept 2018 1200 UTC– Launch of Website / QA / Private Sale 0.1$
-    //24 Sept 1200 UTC to 29 Oct 1200 2018 UTC – Pre Sale / Token Price is US$0.14 with 30% Bonus
-    //29 Oct 1200 UTC to 26 Nov 2018 1200 UTC – Pre Sale / Token Price is US$0.16 with 20% Bonus
-    //26 Nov 1200 UTC to 31 Dec 1200 2018 UTC – Pre Sale / Token Price is US$0.18 with 10% Bonus
-    //31 Dec 2018 1200 UTC to 28 Jan 2019 1200 UTC – ICO Proper / Token Price is US$.20
+    //30% 29 Oct - 27 Jan 1540771200 - 1548633600
+    //30% 28 Jan - 24 Feb 1548633600 - 1551052800
+    //25% 25 Feb - 24 Mar 1551052800 - 1553472000
+    //20% 25 Mar - 28 Apr 1553472000 - 1556496000
+    //15% 29 Apr - 26 May 1556496000 - 1558915200
+    //10% 27 May - 23 Jun 1558915200 - 1561334400
+    //5%  24 Jun - 28 Jul 1561334400 - 1564358400
+    //0%  29 Jul - 25 Aug 1564358400 - 1566691200
     function getBonusPercent() internal view returns(uint _bonus) {
-        //1535803200 = 01/09/2018 @ 12:00pm (UTC)
-        //1537790400 = 24/09/2018 @ 12:00pm (UTC)
-        if (block.timestamp >= 1535803200 && block.timestamp < 1537790400) {
-            return 50;
-        //1540814400 = 29/10/2018 @ 12:00pm (UTC)
-        } else if (block.timestamp >= 1537790400 && block.timestamp < 1540814400) {
+        if (block.timestamp >= 1540771200 && block.timestamp < 1551052800) {
             return 30;
-        //1543233600 = 11/26/2018 @ 12:00pm (UTC)
-        } else if (block.timestamp >= 1540814400 && block.timestamp < 1543233600) {
+        } else if (block.timestamp >= 1551052800 && block.timestamp < 1553472000) {
+            return 25;
+        } else if (block.timestamp >= 1553472000 && block.timestamp < 1556496000) {
             return 20;
-        //1546257600 = 31/12/2018 @ 12:00pm (UTC)
-        } else if (block.timestamp >= 1543233600 && block.timestamp < 1546257600) {
+        } else if (block.timestamp >= 1556496000 && block.timestamp < 1558915200) {
+            return 15;
+        } else if (block.timestamp >= 1558915200 && block.timestamp < 1561334400) {
             return 10;
+        } else if (block.timestamp >= 1561334400 && block.timestamp < 1564358400) {
+            return 5;
         } else return 0;
     }
 
