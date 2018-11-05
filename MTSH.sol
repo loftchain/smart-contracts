@@ -63,7 +63,7 @@ contract MTSH is owned, usingOraclize {
 
     uint256 public totalSupply = 1000000000 * DEC;
     uint256 public tokensForSale = 680000000 * DEC;
-    uint256 minPurchase = 1 ether;
+    uint256 minPurchase = 2 ether;
     uint256 public curs = 250;
     uint256 public cost = 2 * DEC / 10;
     uint256 public rate =  1 ether * curs /cost;
