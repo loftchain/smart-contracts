@@ -27,7 +27,7 @@ library SafeMath {
     }
 }
 
-contract owned {
+contract Owned {
     address public owner;
 
     constructor() public {
@@ -40,7 +40,9 @@ contract owned {
     }
 
     function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
     }
 }
 
@@ -53,12 +55,12 @@ interface tokenRecipient {
     ) external;
 }
 
-contract MTSH is owned, usingOraclize {
+contract MTSH is Owned, usingOraclize {
     using SafeMath for uint256;
 
-    string public name = "Mitoshi";
-    string public symbol = "MTSH";
-    uint8 public decimals = 18;
+    string constant name = "Mitoshi";
+    string constant symbol = "MTSH";
+    uint8 constant decimals = 18;
     uint256 DEC = 10 ** uint256(decimals);
 
     uint256 public totalSupply = 1000000000 * DEC;
@@ -72,17 +74,14 @@ contract MTSH is owned, usingOraclize {
     enum State {Active, Refunding, Closed}
     State public state;
 
-    function __callback(bytes32 myid, string result) {
-        if (msg.sender != oraclize_cbAddress()) revert();
-        curs = parseInt(result);
-        rate =  1 ether * curs /cost;
-        LogPriceUpdated(result);
-        updatePrice();
-    }
-
     constructor() public {
+        oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
         balanceOf[msg.sender] = totalSupply;
         state = State.Active;
+    }
+
+    function() external payable {
+        buyTokens(msg.sender);
     }
 
     mapping(address => uint256) deposited;
@@ -97,6 +96,14 @@ contract MTSH is owned, usingOraclize {
     event Refunded(address indexed beneficiary, uint256 weiAmount);
     event LogPriceUpdated(string price);
     event LogNewOraclizeQuery(string description);
+
+    function __callback(bytes32 myid, string result, bytes proof) public {
+        if (msg.sender != oraclize_cbAddress()) revert();
+        curs = parseInt(result);
+        rate =  1 ether * curs /cost;
+        emit LogPriceUpdated(result);
+        updatePrice();
+    }
 
     modifier transferredIsOn {
         require(state == State.Closed);
@@ -158,10 +165,6 @@ contract MTSH is owned, usingOraclize {
         deposited[beneficiary] = deposited[beneficiary].add(msg.value);
     }
 
-    function() external payable {
-        buyTokens(msg.sender);
-    }
-
     function enableRefunds() onlyOwner public {
         require(state == State.Active);
         state = State.Refunding;
@@ -178,8 +181,8 @@ contract MTSH is owned, usingOraclize {
         require(deposited[investor] > 0);
         uint256 depositedValue = deposited[investor];
         investor.transfer(depositedValue);
-        deposited[investor] = 0;
         emit Refunded(investor, depositedValue);
+        deposited[investor] = 0;
     }
 
     function withdrawBalance() onlyOwner external {
@@ -225,9 +228,9 @@ contract MTSH is owned, usingOraclize {
 
     function updatePrice() payable {
         if (oraclize_getPrice("URL") > this.balance) {
-            LogNewOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
+            emit LogNewOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
         } else {
-            LogNewOraclizeQuery("Oraclize query was sent, standing by for the answer..");
+            emit LogNewOraclizeQuery("Oraclize query was sent, standing by for the answer..");
             //43200 = 12 hour
             oraclize_query(43200, "URL", "json(https://api.gdax.com/products/ETH-USD/ticker).price");
         }
