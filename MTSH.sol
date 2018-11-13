@@ -58,14 +58,15 @@ interface tokenRecipient {
 contract MTSH is Owned, usingOraclize {
     using SafeMath for uint256;
 
-    string constant name = "Mitoshi";
-    string constant symbol = "MTSH";
-    uint8 constant decimals = 18;
+    string public name = "Mitoshi";
+    string public symbol = "MTSH";
+    uint8 public decimals = 18;
     uint256 DEC = 10 ** uint256(decimals);
 
     uint256 public totalSupply = 1000000000 * DEC;
     uint256 public tokensForSale = 680000000 * DEC;
     uint256 minPurchase = 2 ether;
+    uint256 minPurchaseUSD = 500;
     uint256 public curs = 250;
     uint256 public cost = 2 * DEC / 10;
     uint256 public rate =  1 ether * curs /cost;
@@ -107,6 +108,11 @@ contract MTSH is Owned, usingOraclize {
 
     modifier transferredIsOn {
         require(state == State.Closed);
+        _;
+    }
+
+    modifier sellIsOn {
+        require(state == State.Active);
         _;
     }
 
@@ -152,9 +158,8 @@ contract MTSH is Owned, usingOraclize {
         emit Transfer(_from, _to, _value);
     }
 
-    function buyTokens(address beneficiary) payable public {
-        require(state == State.Active);
-        require(msg.value >= minPurchase);
+    function buyTokens(address beneficiary) sellIsOn payable public {
+        require(msg.value >= minPurchase || msg.value.mul(curs) >= minPurchaseUSD.mul(DEC));
         uint amount = rate.mul(msg.value);
         uint bonus = getBonusPercent();
         amount = amount.add(amount.mul(bonus).div(100));
@@ -165,8 +170,7 @@ contract MTSH is Owned, usingOraclize {
         deposited[beneficiary] = deposited[beneficiary].add(msg.value);
     }
 
-    function enableRefunds() onlyOwner public {
-        require(state == State.Active);
+    function enableRefunds() onlyOwner sellIsOn public {
         state = State.Refunding;
         emit RefundsEnabled();
     }
@@ -226,8 +230,8 @@ contract MTSH is Owned, usingOraclize {
         } else return 0;
     }
 
-    function updatePrice() payable {
-        if (oraclize_getPrice("URL") > this.balance) {
+    function updatePrice() sellIsOn payable public {
+        if (oraclize_getPrice("URL") > address(this).balance) {
             emit LogNewOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
         } else {
             emit LogNewOraclizeQuery("Oraclize query was sent, standing by for the answer..");
@@ -236,7 +240,7 @@ contract MTSH is Owned, usingOraclize {
         }
     }
 
-    function setGasPrice(uint _newPrice) public onlyOwner {
+    function setGasPrice(uint _newPrice) onlyOwner public {
         oraclize_setCustomGasPrice(_newPrice * 1 wei);
     }
 
